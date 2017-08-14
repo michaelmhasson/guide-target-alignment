@@ -21,6 +21,7 @@ def cutends(filenames):  # cutadapt to isolate guide and target sequences from r
 
 
 def analyze(guides):  # performs analysis from given set of guides
+    guidenums = {guides[i]: i+1 for i in range(len(guides))}
     gdict = {}
     with open('full1.fasta') as f1, open('full2.fasta') as f2:  # parse through both data files line by line
         for s1, s2 in itertools.izip_longest(f1, f2):
@@ -51,9 +52,9 @@ def analyze(guides):  # performs analysis from given set of guides
     suff = 'AGGATCCATTAGGCGGCCGC'
     w = csv.writer(open("full_aligns.csv", "wb"))
     w.writerow(['guide', 'aligned guide', 'target', 'alignment', 'count', 'inserts', 'deletes', 'mismatches', 'score',
-            'dstart', 'istart'])
+                'dstart', 'istart', 'insstr'])
     od = csv.writer(open("efficiency.csv", "wb"))
-    od.writerow(['guide','count','edits','chimeric','efficiency'])
+    od.writerow(['number','guide','count','edits','chimeric','efficiency'])
     otherguides = 0
     for guide in gdict:
         if any(guide == seq for seq in guides):
@@ -64,14 +65,14 @@ def analyze(guides):  # performs analysis from given set of guides
                 nguide += gdict[guide][target]
                 if not(guide + "AGG" in target) and not(any(seq + "AGG" in target for seq in guides)):
                     nedit += gdict[guide][target]
-                    [s1a, s2a, adata, i, d, mm, score, dstart, istart] = affalign.alignmat(pre + guide + suff, target)
+                    [s1a, s2a, adata, i, d, mm, score, dstart, istart, insstr] = affalign.alignmat(pre + guide + suff, target)
                     if int(score) > 0:
-                        w.writerow([guide, s1a, s2a, adata, gdict[guide][target], i, d, mm, score, dstart, istart])
+                        w.writerow([guide, s1a, s2a, adata, gdict[guide][target], i, d, mm, score, dstart, istart, insstr])
                         if int(mm) > 3 or int(d) == 21 or int(d) == 22:
                             nchim += gdict[guide][target]
                     else:
                         nchim += gdict[guide][target]
-            od.writerow([guide, str(nguide), str(nedit), str(nchim), str(float(nedit-nchim)/nguide)])
+            od.writerow([guidenums[guide], guide, str(nguide), str(nedit), str(nchim), str(float(nedit-nchim)/nguide)])
         else:
             for target in gdict[guide]:
                 otherguides += gdict[guide][target]
@@ -83,10 +84,11 @@ def fullrun(filenames,guides):
     analyze(guides)
 
 # test run with our set of guides and the day 4 data
-
+'''
 default_guides = ['GGACCCTTCGTCGACACGAT', 'GGCATTGTCGATTCGCTCTC', 'GCGCGAAAATTCTATGAGAA', 'GATATCGGAGTTGTTGTTCG',
                   'GGTTTGACCGTACTTGCAGC', 'GCGGAATCTCCTGTCCGAGA', 'GTCGACGATTTTCCACAACC', 'GGCGATCGACTTACGAATAC',
                   'GTCCCTGCACGATACGCATA', 'GCGGCTACCTATTAACGTAG', 'GTCGGTTTATTTGACGAACG', 'GTCGGGTCATTCGTCGATTG',
                   'GACCAGGATGGGCACCACCC']
 
 fullrun('newdata2_1.fastq newdata2_2.fastq',default_guides)
+'''
